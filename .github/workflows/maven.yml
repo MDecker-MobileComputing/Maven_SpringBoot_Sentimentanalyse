@@ -1,0 +1,29 @@
+name: FatJar bauen
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  job-fatjar:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Git-Repo auschecken
+      uses: actions/checkout@v6.0.3
+    - name: JDK einrichten
+      uses: actions/setup-java@v5.2.0
+      with:
+        java-version: 21
+        distribution: 'temurin'
+        cache: maven
+    - name: Maven-Installation checken
+      run: chmod u+x mvnw && ./mvnw --version
+    - name: FatJar-Datei mit Maven bauen
+      run: ./mvnw --batch-mode clean package -DskipTests
+    - name: FatJar-Datei veröffentlichen
+      uses: actions/upload-artifact@v7.0.1
+      with:
+        name: sentimentanalyse
+        path: target/sentimentanalyse-*-SNAPSHOT.jar
+        if-no-files-found: error
+        retention-days: 3
