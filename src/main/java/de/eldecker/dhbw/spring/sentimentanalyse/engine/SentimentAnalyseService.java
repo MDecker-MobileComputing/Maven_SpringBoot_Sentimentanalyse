@@ -108,7 +108,7 @@ public class SentimentAnalyseService {
     										_restClient.post()
                                                        .uri( _restPfad )
                                                        .contentType( APPLICATION_JSON )
-													   .header( "Authorization", "Bearer " + _apiKey ) // Header wird von Docker Model Runner ignoriert
+													   .header( "Authorization", "Bearer " + _apiKey ) // wird von Docker Model Runner ignoriert
                                                        .body( chatAnfrage )
                                                        .retrieve()
                                                        .toEntity( String.class );
@@ -117,7 +117,6 @@ public class SentimentAnalyseService {
 
             final Optional<SentimentErgebnis> ergebnisOptional =
             									parseErgebnisJson( jsonString );
-
 			return ergebnisOptional;
 		}
 		catch ( RestClientResponseException ex ) {
@@ -251,7 +250,7 @@ public class SentimentAnalyseService {
 	 */
 	private boolean hatErgebnisFelder( JsonNode node ) {
 
-		return node != null          &&
+		return  node != null         &&
 			   !node.isMissingNode() &&
 			   ( node.has( "sentiment" ) || node.has( "confidence" ) );
 	}
