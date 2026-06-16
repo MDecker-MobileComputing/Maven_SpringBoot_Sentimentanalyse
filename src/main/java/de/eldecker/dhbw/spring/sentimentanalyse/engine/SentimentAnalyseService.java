@@ -5,11 +5,13 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import jakarta.annotation.PostConstruct;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -33,22 +35,51 @@ public class SentimentAnalyseService {
     		Nutzerkommentar: {{kommentar}}
     		""";
 
-
-    /** Objekt für REST-Calls. */
-    private final RestClient _restClient;
-
 	/** JSON-Parser für Antwort-Body. */
 	private final ObjectMapper _objectMapper = new ObjectMapper();
 
 
-    /**
-     * Konstruktor, erzeugt REST-Client-Objekt.
-     */
-	public SentimentAnalyseService() {
+    /** Objekt für REST-Calls. */
+    private RestClient _restClient;
+
+
+	/**
+	 * Basis-URL für REST-API von KI, kann durch Eintrag {@code sentimentanalyse.basisurl}
+	 * in Datei {@code application.properties} überschrieben werden.
+	 * Der Default-Wert ist {@code localhost:12434} für den <i>Docker Model Runner</i>.
+	 */
+	@Value( "${sentimentanalyse.basisurl:http://localhost:12434}" )
+	private String _basisUrl;
+
+	/**
+	 * Pfad für REST-API von KI, kann durch Eintrag {@code sentimentanalyse.pfad}
+	 * in Datei {@code application.properties} überschrieben werden.
+	 * Der Default-Wert ist {@code /engines/v1/chat/completions} für den
+	 * <i>Docker Model Runner</i>.
+	 */
+	@Value( "${sentimentanalyse.pfad:/engines/v1/chat/completions}" )
+	private String _restPfad;
+
+	/** Technischer Name des zu verwendeten KI-Models (LLM). */
+	@Value( "${sentimentanalyse.model:ai/mistral:7B-Q4_0}" )
+	private String _model;
+
+	/** API-Key; ist leerer String für Aufruf von <i>Docker Model Runner</i>. */
+	@Value( "${sentimentanalyse.apikey:}" )
+	private String _apiKey;
+
+	
+	/**
+	 * {@code RestClient}-Objekt erzeugen; benötigt {@code basisUrl}, die evtl.
+	 * in Konfigurationsdatei überschrieben ist, weshalb dies nicht im Konstruktor
+	 * gemacht werden.
+	 */
+	@PostConstruct
+	private void init() {
 
 		_restClient = RestClient.builder()
-								.baseUrl( "http://localhost:12434" )
-								.build();
+				                .baseUrl( _basisUrl )
+				                .build();
 	}
 
 
@@ -67,24 +98,24 @@ public class SentimentAnalyseService {
 			final String prompt =
 					PROMPT_TEMPLATE.replace( "{{kommentar}}", kommentar ) ;
 
-			final String pfad = "/engines/v1/chat/completions";
-
-			final ChatAnfrage chatAnfrage = new ChatAnfrage(
-					"ai/mistral:7B-Q4_0",
-					List.of( new ChatMessage( "user", prompt ) )
-				);
+			final ChatAnfrage chatAnfrage =
+									new ChatAnfrage(
+											_model,
+					                         List.of( new ChatMessage( "user", prompt ) )
+				                    );
 
             final ResponseEntity<String> responseEntity =
     										_restClient.post()
-                                                       .uri( pfad )
+                                                       .uri( _restPfad )
                                                        .contentType( APPLICATION_JSON )
+													   .header( "Authorization", "Bearer " + _apiKey ) // Header wird von Docker Model Runner ignoriert
                                                        .body( chatAnfrage )
                                                        .retrieve()
                                                        .toEntity( String.class );
 
             final String jsonString = responseEntity.getBody();
 
-            final Optional<SentimentErgebnis> ergebnisOptional = 
+            final Optional<SentimentErgebnis> ergebnisOptional =
             									parseErgebnisJson( jsonString );
 
 			return ergebnisOptional;
@@ -121,7 +152,7 @@ public class SentimentAnalyseService {
 			final JsonNode wurzelNode = _objectMapper.readTree( jsonString );
 			final JsonNode payloadNode = ermittlePayloadNode( wurzelNode );
 			if ( payloadNode == null ) {
-				
+
 				System.out.println( "Unerwartete Ergebnisstruktur" );
 				return Optional.empty();
 			}
@@ -151,58 +182,58 @@ public class SentimentAnalyseService {
 
 	/**
 	 * Sucht die Nutzdaten für das Ergebnis in mehreren bekannten Formaten.
-	 * 
+	 *
 	 * @param wurzelNode Knoten aus JSON-Dokument, der untersucht werden soll;
-	 *                   {@code null}, wenn der Knoten ein unerwartetes Format 
+	 *                   {@code null}, wenn der Knoten ein unerwartetes Format
 	 *                   hat
 	 */
 	private JsonNode ermittlePayloadNode( JsonNode wurzelNode ) {
 
 		if ( hatErgebnisFelder( wurzelNode ) ) {
-			
+
 			return wurzelNode;
 		}
 
 		final JsonNode choicesArray = wurzelNode.path( "choices" );
 		if ( !choicesArray.isArray() || choicesArray.isEmpty() ) {
-			
+
 			return null;
 		}
 
 		final JsonNode choiceNode = choicesArray.get( 0 );
 		if ( hatErgebnisFelder( choiceNode ) ) {
-			
+
 			return choiceNode;
 		}
 
 		final JsonNode messageNode = choiceNode.path( "message" );
 		if ( hatErgebnisFelder( messageNode ) ) {
-			
+
 			return messageNode;
 		}
 
 		final JsonNode contentNode = messageNode.path( "content" );
 		if ( !contentNode.isString() ) {
-			
+
 			return null;
 		}
 
 		final String contentString = contentNode.asString( "" );
 		if ( contentString.isBlank() ) {
-			
+
 			return null;
 		}
 
 		try {
-			
+
 			final JsonNode contentJsonNode = _objectMapper.readTree( contentString );
 			if ( hatErgebnisFelder( contentJsonNode ) ) {
-				
+
 				return contentJsonNode;
 			}
 		}
 		catch ( Exception ex ) {
-			
+
 			return null;
 		}
 
@@ -212,9 +243,9 @@ public class SentimentAnalyseService {
 
 	/**
 	 * Knoten aus JSON-Dokument daraufhin untersuchen, ob er ein Ergebnisfeld enthält.
-	 * 
+	 *
 	 * @param node Knoten, der untersucht werden soll
-	 * 
+	 *
 	 * @return {@code true} gdw. der Knoten ein erwartes Ergebnisfeld (nämlich
 	 *         {@code sentiment} oder {@code confidence} hat
 	 */

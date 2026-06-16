@@ -8,13 +8,9 @@ Text dann per REST-API an eine LLM-KI schickt.
 
 <br>
 
-AI-Model in [Docker Model Runner](https://docs.docker.com/ai/model-runner/):
-[mistral:7B-Q4_0](https://hub.docker.com/layers/ai/mistral/7B-Q4_0/)
-
-<br>
-
 ![Screenshot](screenshot_1.png)
-
+Verwendetes AI-Model in [Docker Model Runner](https://docs.docker.com/ai/model-runner/):
+[mistral:7B-Q4_0](https://hub.docker.com/layers/ai/mistral/7B-Q4_0/)
 <br>
 
 ----
