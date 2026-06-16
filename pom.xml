@@ -10,19 +10,27 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.1.0</version>
-		<relativePath/> <!-- lookup parent from repository -->
-        
+		<relativePath/> <!-- lookup parent from repository -->        
 	</parent>
+	
 	<groupId>de.eldecker.dhbw.spring</groupId>
 	<artifactId>sentimentanalyse</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
     
-	<name/>
-	<description/>
+	<name>Sentimentanalyse mit KI</name>
+	<description>Sentimentanalyse mit über REST angebundener KI</description>
     <inceptionYear>2026</inceptionYear>
         
 	<properties>
+	
 		<java.version>21</java.version>
+		
+		<!--
+			Unit-Tests überspringen, weil es keine gibt und sonst der Maven-Prozess
+			blockiert, weil er auf Eingabe von STDIN wartet.
+		 -->
+		<maven.test.skip>true</maven.test.skip>		
+		
 	</properties>
     
 	<dependencies>
