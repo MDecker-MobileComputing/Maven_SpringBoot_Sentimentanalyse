@@ -84,7 +84,8 @@ public class SentimentAnalyseService {
 
             final String jsonString = responseEntity.getBody();
 
-            final Optional<SentimentErgebnis> ergebnisOptional = parseErgebnisJson( jsonString );
+            final Optional<SentimentErgebnis> ergebnisOptional = 
+            									parseErgebnisJson( jsonString );
 
 			return ergebnisOptional;
 		}
@@ -113,6 +114,7 @@ public class SentimentAnalyseService {
 		try {
 
 			if ( jsonString == null || jsonString.isBlank() ) {
+
 				return Optional.empty();
 			}
 
@@ -144,14 +146,15 @@ public class SentimentAnalyseService {
 			System.out.println( "Fehler beim Parsen des Ergebnis-JSON: " + ex.getMessage() );
 			return Optional.empty();
 		}
-
 	}
 
 
 	/**
 	 * Sucht die Nutzdaten für das Ergebnis in mehreren bekannten Formaten.
 	 * 
-	 * @param wurzelNode = 
+	 * @param wurzelNode Knoten aus JSON-Dokument, der untersucht werden soll;
+	 *                   {@code null}, wenn der Knoten ein unerwartetes Format 
+	 *                   hat
 	 */
 	private JsonNode ermittlePayloadNode( JsonNode wurzelNode ) {
 
@@ -191,6 +194,7 @@ public class SentimentAnalyseService {
 		}
 
 		try {
+			
 			final JsonNode contentJsonNode = _objectMapper.readTree( contentString );
 			if ( hatErgebnisFelder( contentJsonNode ) ) {
 				
@@ -206,9 +210,17 @@ public class SentimentAnalyseService {
 	}
 
 
+	/**
+	 * Knoten aus JSON-Dokument daraufhin untersuchen, ob er ein Ergebnisfeld enthält.
+	 * 
+	 * @param node Knoten, der untersucht werden soll
+	 * 
+	 * @return {@code true} gdw. der Knoten ein erwartes Ergebnisfeld (nämlich
+	 *         {@code sentiment} oder {@code confidence} hat
+	 */
 	private boolean hatErgebnisFelder( JsonNode node ) {
 
-		return node != null &&
+		return node != null          &&
 			   !node.isMissingNode() &&
 			   ( node.has( "sentiment" ) || node.has( "confidence" ) );
 	}

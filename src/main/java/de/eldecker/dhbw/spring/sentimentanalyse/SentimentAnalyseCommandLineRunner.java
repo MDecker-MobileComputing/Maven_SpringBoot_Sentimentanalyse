@@ -38,7 +38,7 @@ public class SentimentAnalyseCommandLineRunner implements CommandLineRunner {
 	/**
 	 * Diese Methode wird unmittelbar nach Start der Spring-Boot-Anwendung ausgeführt. 
 	 * 
-	 * @param args Wird nicht ausgewertet.
+	 * @param args Wird nicht ausgewertet
 	 */
 	@Override
 	public void run( String... args ) throws Exception {
