@@ -52,10 +52,20 @@ public class SentimentAnalyseCommandLineRunner implements CommandLineRunner {
 				break;
 			}
 			
-			final Optional<SentimentErgebnis> ergebnisOptional = 
-					_sentimentAnalyseService.sentimentAnalysieren( "A must-have for everyone" );
-
+			final String kommentar = kommentarOptional.get();
 			
+			final Optional<SentimentErgebnis> ergebnisOptional = 
+					_sentimentAnalyseService.sentimentAnalysieren( kommentar );
+
+			if ( ergebnisOptional.isEmpty() ) {
+				
+				System.out.println( "\nFehler: Keine Antwort von KI erhalten.\n" );
+				
+			} else {
+				
+				final SentimentErgebnis sentimentErgebnis = ergebnisOptional.get();
+				System.out.println( "\nAuswertung: " + sentimentErgebnis + "\n" );
+			}
 		}		
 	}
 	
