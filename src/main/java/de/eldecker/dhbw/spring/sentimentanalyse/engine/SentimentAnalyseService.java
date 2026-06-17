@@ -114,6 +114,7 @@ public class SentimentAnalyseService {
                                                        .toEntity( String.class );
 
             final String jsonString = responseEntity.getBody();
+            // Beispiel-Response: https://gist.github.com/MDecker-MobileComputing/64bc680596b379751dc4049ac145b16d
 
             final Optional<SentimentErgebnis> ergebnisOptional =
             									parseErgebnisJson( jsonString );
