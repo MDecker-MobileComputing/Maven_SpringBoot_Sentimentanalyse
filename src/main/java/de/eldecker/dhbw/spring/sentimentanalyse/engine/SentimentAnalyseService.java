@@ -98,10 +98,11 @@ public class SentimentAnalyseService {
 			final String prompt =
 					PROMPT_TEMPLATE.replace( "{{kommentar}}", kommentar ) ;
 
+			final ChatMessage chatMessage = new ChatMessage( "user", prompt );
 			final ChatAnfrage chatAnfrage =
 									new ChatAnfrage(
 											_model,
-					                         List.of( new ChatMessage( "user", prompt ) )
+					                        List.of( chatMessage )
 				                    );
 
             final ResponseEntity<String> responseEntity =
@@ -116,8 +117,8 @@ public class SentimentAnalyseService {
             final String jsonString = responseEntity.getBody();
             // Beispiel-Response: https://gist.github.com/MDecker-MobileComputing/64bc680596b379751dc4049ac145b16d
 
-            final Optional<SentimentErgebnis> ergebnisOptional =
-            									parseErgebnisJson( jsonString );
+            final Optional<SentimentErgebnis> ergebnisOptional = parseErgebnisJson( jsonString );
+            									
 			return ergebnisOptional;
 		}
 		catch ( RestClientResponseException ex ) {
