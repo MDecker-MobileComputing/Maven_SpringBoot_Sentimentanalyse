@@ -75,7 +75,7 @@ public class SentimentAnalyseService {
 	 * gemacht werden.
 	 */
 	@PostConstruct
-	private void init() {
+	private void initialisiere() {
 
 		_restClient = RestClient.builder()
 				                .baseUrl( _basisUrl )
